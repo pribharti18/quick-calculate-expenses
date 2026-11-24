@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickCalc — Smart Calculator &amp; Expense Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    /* ==========================================================================
+       CSS Variables & Design Tokens (Light & Dark Themes)
+       ========================================================================== */
+    :root {
+      --bg-page: #f4f6fb;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --bg-hover: #e2e8f0;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --accent: #d97706;
+      --accent-hover: #b45309;
+      --accent-soft: #fef3c7;
+      --accent-text: #92400e;
+      --indigo: #4f46e5;
+      --indigo-soft: #eef2ff;
+      --indigo-text: #3730a3;
+      --success: #059669;
+      --success-soft: #ecfdf5;
+      --warning: #d97706;
+      --danger: #dc2626;
+      --danger-soft: #fef2f2;
+      --calc-display-bg: #0f172a;
+      --calc-display-text: #f8fafc;
+      --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+      --shadow-md: 0 10px 28px -6px rgba(15, 23, 42, 0.08);
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+    }
+
+    html.dark {
+      --bg-page: #080d1a;
+      --bg-surface: #111827;
+      --bg-subtle: #1e293b;
+      --bg-hover: #334155;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border-color: #1f2937;
+      --accent: #f59e0b;
+      --accent-hover: #fbbf24;
+      --accent-soft: rgba(245, 158, 11, 0.16);
+      --accent-text: #fcd34d;
+      --indigo: #6366f1;
+      --indigo-soft: rgba(99, 102, 241, 0.18);
+      --indigo-text: #a5b4fc;
+      --success: #10b981;
+      --success-soft: rgba(16, 185, 129, 0.15);
+      --warning: #f59e0b;
+      --danger: #f87171;
+      --danger-soft: rgba(248, 113, 113, 0.15);
+      --calc-display-bg: #050914;
+      --calc-display-text: #f8fafc;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 14px 32px -8px rgba(0, 0, 0, 0.6);
+    }
+
+    /* ==========================================================================
+       Base & Reset
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    button, input, select {
+      font-family: inherit;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    a:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    /* ==========================================================================
+       Header
+       ========================================================================== */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 68px;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      text-decoration: none;
+      color: var(--text-primary);
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f59e0b, #ea580c);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      font-family: 'Fira Code', monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+
+    .brand-title {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: block;
+      line-height: 1.15;
+    }
+
+    .brand-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .header-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      text-decoration: none;
+      font-size: 0.84rem;
+      font-weight: 600;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .header-link:hover {
+      background: var(--bg-hover);
+    }
+
+    .theme-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .theme-btn:hover {
+      background: var(--bg-hover);
+    }
+
+    /* ==========================================================================
+       Main Two-Column Dashboard Grid
+       ========================================================================== */
+    .dashboard {
+      flex: 1;
+      padding: 1.75rem 0 3rem;
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (min-width: 960px) {
+      .dashboard-grid {
+        grid-template-columns: 400px 1fr;
+        gap: 1.75rem;
+      }
+    }
+
+    .panel {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.35rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    @media (min-width: 640px) {
+      .panel {
+        padding: 1.6rem;
+      }
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1.15rem;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.015em;
+    }
+
+    .panel-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.22rem 0.6rem;
+      border-radius: 999px;
+      background-color: var(--accent-soft);
+      color: var(--accent-text);
+    }
+
+    /* ==========================================================================
+       Left Panel: Interactive Calculator
+       ========================================================================== */
+    .calc-screen {
+      background-color: var(--calc-display-bg);
+      color: var(--calc-display-text);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.15rem;
+      margin-bottom: 1rem;
+      text-align: right;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      min-height: 102px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    .calc-expression {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      min-height: 1.25rem;
+      word-break: break-all;
+    }
+
+    .calc-output {
+      font-family: 'Fira Code', monospace;
+      font-size: 1.85rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      word-break: break-all;
+      margin-top: 0.25rem;
+    }
+
+    .calc-output.is-error {
+      color: #fca5a5;
+      font-size: 1.2rem;
+    }
+
+    .calc-keypad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.55rem;
+      margin-bottom: 0.9rem;
+    }
+
+    .calc-key {
+      height: 50px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-subtle);
+      color: var(--text-primary);
+      font-family: 'Fira Code', monospace;
+      font-size: 1.05rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.08s ease, background-color 0.15s ease, border-color 0.15s ease;
+      user-select: none;
+    }
+
+    .calc-key:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .calc-key:active {
+      transform: scale(0.97);
+    }
+
+    .calc-key.is-op {
+      background-color: var(--indigo-soft);
+      color: var(--indigo-text);
+      border-color: transparent;
+    }
+
+    .calc-key.is-op:hover {
+      filter: brightness(0.95);
+    }
+
+    .calc-key.is-clear {
+      background-color: var(--danger-soft);
+      color: var(--danger);
+      border-color: transparent;
+    }
+
+    .calc-key.is-equals {
+      background-color: var(--accent);
+      color: #ffffff;
+      border-color: transparent;
+      font-weight: 700;
+    }
+
+    .calc-key.is-equals:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .send-expense-btn {
+      width: 100%;
+      padding: 0.72rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1px dashed var(--accent);
+      background-color: var(--accent-soft);
+      color: var(--accent-text);
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+    }
+
+    .send-expense-btn:hover {
+      background-color: var(--accent);
+      color: #ffffff;
+    }
+
+    .keyboard-hint {
+      margin: 0.6rem 0 0;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* Recent Calculations History */
+    .history-box {
+      margin-top: 1.25rem;
+      padding-top: 1.1rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+    }
+
+    .history-title {
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .text-btn {
+      background: transparent;
+      border: none;
+      color: var(--danger);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0.2rem 0.45rem;
+      border-radius: 6px;
+    }
+
+    .text-btn:hover:not(:disabled) {
+      background-color: var(--danger-soft);
+    }
+
+    .text-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .history-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 185px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.55rem 0.75rem;
+      border-radius: var(--radius-sm);
+      background-color: var(--bg-subtle);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: border-color 0.15s ease;
+    }
+
+    .history-item:hover {
+      border-color: var(--accent);
+    }
+
+    .history-expr {
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-res {
+      font-weight: 700;
+      color: var(--accent-text);
+      white-space: nowrap;
+    }
+
+    .empty-mini {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 1rem 0.5rem;
+      background-color: var(--bg-subtle);
+      border-radius: var(--radius-sm);
+    }
+
+    /* ==========================================================================
+       Right Panel: Daily Expense Tracker
+       ========================================================================== */
+    .budget-card {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .budget-top {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .budget-label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .budget-input-group {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .budget-input {
+      width: 130px;
+      padding: 0.4rem 0.65rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .btn-save-budget {
+      padding: 0.42rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: none;
+      background-color: var(--indigo);
+      color: #ffffff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-save-budget:hover {
+      filter: brightness(1.08);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 11px;
+      border-radius: 999px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background-color: var(--success);
+      border-radius: 999px;
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    .progress-fill.is-warning {
+      background-color: var(--warning);
+    }
+
+    .progress-fill.is-over {
+      background-color: var(--danger);
+    }
+
+    .budget-caption {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 0.45rem;
+    }
+
+    /* Summary Cards */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.35rem;
+    }
+
+    @media (max-width: 520px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stat-card {
+      padding: 0.9rem 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-page);
+    }
+
+    .stat-label {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    .stat-value {
+      font-family: 'Fira Code', monospace;
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-top: 0.2rem;
+      display: block;
+    }
+
+    .stat-value.is-spent {
+      color: var(--accent-text);
+    }
+
+    .stat-value.is-positive {
+      color: var(--success);
+    }
+
+    .stat-value.is-negative {
+      color: var(--danger);
+    }
+
+    /* Add Expense Form */
+    .expense-form {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-bottom: 1.35rem;
+    }
+
+    .expense-form-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+
+    @media (min-width: 640px) {
+      .expense-form-grid {
+        grid-template-columns: 2fr 1.1fr;
+      }
+      .expense-form-row2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 0.75rem;
+        align-items: end;
+        margin-top: 0.75rem;
+      }
+    }
+
+    @media (max-width: 639px) {
+      .expense-form-row2 {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+      }
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .field-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.6rem 0.8rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+    }
+
+    .form-control:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .btn-add-expense {
+      padding: 0.62rem 1.2rem;
+      border-radius: var(--radius-sm);
+      border: none;
+      background-color: var(--accent);
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn-add-expense:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .form-feedback {
+      margin: 0.5rem 0 0;
+      font-size: 0.82rem;
+      min-height: 1.15rem;
+      color: var(--danger);
+    }
+
+    .form-feedback.is-ok {
+      color: var(--success);
+    }
+
+    /* Category Breakdown Bars */
+    .breakdown-box {
+      margin-bottom: 1.35rem;
+      padding: 1rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-page);
+    }
+
+    .breakdown-title {
+      margin: 0 0 0.75rem;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+    }
+
+    .breakdown-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .breakdown-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .breakdown-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .breakdown-bar-bg {
+      width: 100%;
+      height: 7px;
+      border-radius: 999px;
+      background-color: var(--bg-subtle);
+      overflow: hidden;
+    }
+
+    .breakdown-bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background-color: var(--indigo);
+      transition: width 0.3s ease;
+    }
+
+    /* Filter Pills, Search & Transactions List */
+    .tx-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .cat-pill {
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-subtle);
+      color: var(--text-secondary);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .cat-pill[aria-pressed="true"] {
+      background-color: var(--indigo);
+      color: #ffffff;
+      border-color: var(--indigo);
+    }
+
+    .search-clear-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 190px;
+    }
+
+    .btn-clear-all {
+      padding: 0.55rem 0.85rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background-color: var(--danger-soft);
+      color: var(--danger);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-clear-all:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* Inline Confirmation Banner */
+    .confirm-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.9rem;
+      border-radius: var(--radius-sm);
+      background-color: var(--danger-soft);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+
+    .confirm-banner[hidden] {
+      display: none;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 0.45rem;
+    }
+
+    .btn-confirm-yes {
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      border: none;
+      background-color: var(--danger);
+      color: #ffffff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-confirm-no {
+      padding: 0.35rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .tx-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+
+    .tx-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.8rem 0.95rem;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-page);
+    }
+
+    .tx-info {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .tx-title {
+      font-weight: 600;
+      font-size: 0.93rem;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .tx-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.45rem;
+      margin-top: 0.2rem;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+    }
+
+    .tx-cat-badge {
+      padding: 0.12rem 0.5rem;
+      border-radius: 999px;
+      background-color: var(--indigo-soft);
+      color: var(--indigo-text);
+      font-weight: 600;
+    }
+
+    .tx-right {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      flex-shrink: 0;
+    }
+
+    .tx-amount {
+      font-family: 'Fira Code', monospace;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    .tx-del-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-surface);
+      color: var(--text-muted);
+      font-weight: 700;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.15s ease;
+    }
+
+    .tx-del-btn:hover {
+      background-color: var(--danger-soft);
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    /* ==========================================================================
+       Footer
+       ========================================================================== */
+    .site-footer {
+      border-top: 1px solid var(--border-color);
+      background-color: var(--bg-surface);
+      padding: 1.5rem 0;
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+    }
+
+    .footer-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      text-align: center;
+    }
+
+    @media (min-width: 640px) {
+      .footer-inner {
+        flex-direction: row;
+        text-align: left;
+      }
+    }
+
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .footer-links a {
+      color: var(--accent-text);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .footer-links a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="brand" aria-label="QuickCalc Home">
+        <span class="brand-logo" aria-hidden="true">₹=</span>
+        <span>
+          <span class="brand-title">QuickCalc</span>
+          <span class="brand-sub">Smart Calculator &amp; Daily Expense Tracker</span>
+        </span>
+      </a>
+
+      <div class="header-actions">
+        <a
+          href="https://github.com/pribharti18"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="header-link"
+        >
+          GitHub Profile
+        </a>
+        <button
+          type="button"
+          id="theme-toggle"
+          class="theme-btn"
+          aria-label="Toggle dark or light mode"
+        >
+          <span id="theme-icon" aria-hidden="true">🌙</span>
+          <span id="theme-label">Dark</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Dashboard -->
+  <main class="dashboard">
+    <div class="container dashboard-grid">
+      <!-- ==================== LEFT PANEL: CALCULATOR ==================== -->
+      <section class="panel" aria-labelledby="calc-heading">
+        <div class="panel-header">
+          <h1 id="calc-heading" class="panel-title">Interactive Calculator</h1>
+          <span class="panel-badge">Keyboard Ready</span>
+        </div>
+
+        <!-- Calculator Display -->
+        <div class="calc-screen" role="region" aria-label="Calculator display">
+          <div id="calc-expression" class="calc-expression">0</div>
+          <div id="calc-output" class="calc-output" aria-live="polite">0</div>
+        </div>
+
+        <!-- Keypad -->
+        <div class="calc-keypad" role="group" aria-label="Calculator keypad">
+          <button type="button" class="calc-key is-clear" data-action="clear">AC</button>
+          <button type="button" class="calc-key is-op" data-action="backspace" aria-label="Backspace">⌫</button>
+          <button type="button" class="calc-key is-op" data-value="(">(</button>
+          <button type="button" class="calc-key is-op" data-value=")">)</button>
+
+          <button type="button" class="calc-key" data-value="7">7</button>
+          <button type="button" class="calc-key" data-value="8">8</button>
+          <button type="button" class="calc-key" data-value="9">9</button>
+          <button type="button" class="calc-key is-op" data-value="÷" aria-label="Divide">÷</button>
+
+          <button type="button" class="calc-key" data-value="4">4</button>
+          <button type="button" class="calc-key" data-value="5">5</button>
+          <button type="button" class="calc-key" data-value="6">6</button>
+          <button type="button" class="calc-key is-op" data-value="×" aria-label="Multiply">×</button>
+
+          <button type="button" class="calc-key" data-value="1">1</button>
+          <button type="button" class="calc-key" data-value="2">2</button>
+          <button type="button" class="calc-key" data-value="3">3</button>
+          <button type="button" class="calc-key is-op" data-value="-" aria-label="Subtract">−</button>
+
+          <button type="button" class="calc-key" data-value="0">0</button>
+          <button type="button" class="calc-key" data-value=".">.</button>
+          <button type="button" class="calc-key is-op" data-value="%">%</button>
+          <button type="button" class="calc-key is-op" data-value="+" aria-label="Add">+</button>
+
+          <button type="button" class="calc-key is-equals" style="grid-column: span 4;" data-action="equals">=</button>
+        </div>
+
+        <!-- Quick Bridge to Expense Tracker -->
+        <button type="button" id="send-to-expense-btn" class="send-expense-btn">
+          <span>→ Send Result to Expense Amount (₹)</span>
+        </button>
+        <p class="keyboard-hint">Supports keyboard keys: 0–9, + − * / % ( ), Enter, Backspace, Esc</p>
+
+        <!-- Recent Calculations History -->
+        <div class="history-box">
+          <div class="history-header">
+            <span class="history-title">Recent Calculations</span>
+            <button type="button" id="clear-history-btn" class="text-btn" disabled>Clear History</button>
+          </div>
+          <ul id="calc-history-list" class="history-list"></ul>
+        </div>
+      </section>
+
+      <!-- ==================== RIGHT PANEL: EXPENSE TRACKER ==================== -->
+      <section class="panel" aria-labelledby="expense-heading">
+        <div class="panel-header">
+          <h2 id="expense-heading" class="panel-title">Daily Expense Tracker (₹)</h2>
+          <span class="panel-badge">Auto-Saved</span>
+        </div>
+
+        <!-- Budget Target & Progress Bar -->
+        <div class="budget-card">
+          <div class="budget-top">
+            <label for="budget-input" class="budget-label">Budget Target (₹)</label>
+            <form id="budget-form" class="budget-input-group">
+              <input
+                type="number"
+                id="budget-input"
+                class="budget-input"
+                min="1"
+                step="any"
+                placeholder="e.g. 5000"
+                required
+              />
+              <button type="submit" class="btn-save-budget">Set Budget</button>
+            </form>
+          </div>
+          <div class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="budget-progressbar">
+            <div id="budget-progress-fill" class="progress-fill"></div>
+          </div>
+          <div class="budget-caption">
+            <span id="budget-percent-label">0% of budget used</span>
+            <span id="budget-target-display">Target: ₹5,000.00</span>
+          </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+          <div class="stat-card">
+            <span class="stat-label">Total Spent</span>
+            <span id="stat-spent" class="stat-value is-spent">₹0.00</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Remaining Budget</span>
+            <span id="stat-remaining" class="stat-value is-positive">₹5,000.00</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Transactions</span>
+            <span id="stat-count" class="stat-value">0</span>
+          </div>
+        </div>
+
+        <!-- Add Expense Form -->
+        <form id="expense-form" class="expense-form" novalidate>
+          <div class="expense-form-grid">
+            <div class="field-group">
+              <label for="exp-title" class="field-label">Expense Description *</label>
+              <input
+                type="text"
+                id="exp-title"
+                class="form-control"
+                placeholder="e.g., Metro recharge, Lunch, Books"
+                maxlength="80"
+                required
+              />
+            </div>
+            <div class="field-group">
+              <label for="exp-amount" class="field-label">Amount (₹) *</label>
+              <input
+                type="number"
+                id="exp-amount"
+                class="form-control"
+                min="0.01"
+                step="0.01"
+                placeholder="0.00"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="expense-form-row2">
+            <div class="field-group">
+              <label for="exp-category" class="field-label">Category</label>
+              <select id="exp-category" class="form-control">
+                <option value="Food">Food</option>
+                <option value="Transport">Transport</option>
+                <option value="Bills">Bills</option>
+                <option value="Shopping">Shopping</option>
+                <option value="Study/Tech">Study/Tech</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="field-group">
+              <label for="exp-date" class="field-label">Date</label>
+              <input type="date" id="exp-date" class="form-control" required />
+            </div>
+
+            <button type="submit" class="btn-add-expense">+ Add Expense</button>
+          </div>
+
+          <p id="exp-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+        </form>
+
+        <!-- Category Breakdown Summary Bars -->
+        <div class="breakdown-box">
+          <h3 class="breakdown-title">Category Breakdown</h3>
+          <div id="category-breakdown-list" class="breakdown-list"></div>
+        </div>
+
+        <!-- Filter Pills, Search & Clear All -->
+        <div class="tx-controls">
+          <div id="category-pills" class="pill-row" role="group" aria-label="Filter expenses by category">
+            <button type="button" class="cat-pill" data-cat="All" aria-pressed="true">All</button>
+            <button type="button" class="cat-pill" data-cat="Food" aria-pressed="false">Food</button>
+            <button type="button" class="cat-pill" data-cat="Transport" aria-pressed="false">Transport</button>
+            <button type="button" class="cat-pill" data-cat="Bills" aria-pressed="false">Bills</button>
+            <button type="button" class="cat-pill" data-cat="Shopping" aria-pressed="false">Shopping</button>
+            <button type="button" class="cat-pill" data-cat="Study/Tech" aria-pressed="false">Study/Tech</button>
+            <button type="button" class="cat-pill" data-cat="Other" aria-pressed="false">Other</button>
+          </div>
+
+          <div class="search-clear-row">
+            <input
+              type="search"
+              id="exp-search"
+              class="form-control search-input"
+              placeholder="Search expenses by title or category..."
+              aria-label="Search expenses"
+            />
+            <button type="button" id="clear-all-exp-btn" class="btn-clear-all" disabled>
+              Clear All Expenses
+            </button>
+          </div>
+        </div>
+
+        <!-- Inline Confirmation Banner (replaces window.confirm) -->
+        <div id="clear-confirm-banner" class="confirm-banner" hidden>
+          <span>Delete all logged expenses permanently?</span>
+          <div class="confirm-actions">
+            <button type="button" id="confirm-clear-yes" class="btn-confirm-yes">Yes, Delete All</button>
+            <button type="button" id="confirm-clear-no" class="btn-confirm-no">Cancel</button>
+          </div>
+        </div>
+
+        <!-- Expense List -->
+        <ul id="expense-list" class="tx-list" aria-label="Logged expenses"></ul>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div>
+        Built by <strong>Preeti Bharti</strong> &middot; QuickCalc Calculator &amp; Expense Tracker
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/pribharti18" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://www.linkedin.com/in/preetibhartiwriter" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ======================================================================
+         Storage Keys & Constants
+         ====================================================================== */
+      const STORAGE = {
+        THEME: 'quickcalc.theme.v1',
+        HISTORY: 'quickcalc.history.v1',
+        BUDGET: 'quickcalc.budget.v1',
+        EXPENSES: 'quickcalc.expenses.v1'
+      };
+
+      const CATEGORIES = ['Food', 'Transport', 'Bills', 'Shopping', 'Study/Tech', 'Other'];
+
+      /* ======================================================================
+         State
+         ====================================================================== */
+      let expression = '';
+      let currentDisplay = '0';
+      let lastResultNumeric = 0;
+      let hasError = false;
+      let calcHistory = [];
+
+      let budgetTarget = 5000;
+      let expenses = [];
+      let selectedCategory = 'All';
+      let searchQuery = '';
+
+      /* ======================================================================
+         DOM References
+         ====================================================================== */
+      const dom = {
+        themeToggle: document.getElementById('theme-toggle'),
+        themeIcon: document.getElementById('theme-icon'),
+        themeLabel: document.getElementById('theme-label'),
+
+        calcExpr: document.getElementById('calc-expression'),
+        calcOutput: document.getElementById('calc-output'),
+        keypad: document.querySelector('.calc-keypad'),
+        sendToExpenseBtn: document.getElementById('send-to-expense-btn'),
+        clearHistoryBtn: document.getElementById('clear-history-btn'),
+        historyList: document.getElementById('calc-history-list'),
+
+        budgetForm: document.getElementById('budget-form'),
+        budgetInput: document.getElementById('budget-input'),
+        budgetProgressbar: document.getElementById('budget-progressbar'),
+        budgetProgressFill: document.getElementById('budget-progress-fill'),
+        budgetPercentLabel: document.getElementById('budget-percent-label'),
+        budgetTargetDisplay: document.getElementById('budget-target-display'),
+
+        statSpent: document.getElementById('stat-spent'),
+        statRemaining: document.getElementById('stat-remaining'),
+        statCount: document.getElementById('stat-count'),
+
+        expenseForm: document.getElementById('expense-form'),
+        expTitle: document.getElementById('exp-title'),
+        expAmount: document.getElementById('exp-amount'),
+        expCategory: document.getElementById('exp-category'),
+        expDate: document.getElementById('exp-date'),
+        expFeedback: document.getElementById('exp-feedback'),
+
+        breakdownList: document.getElementById('category-breakdown-list'),
+        categoryPills: Array.from(document.querySelectorAll('.cat-pill')),
+        expSearch: document.getElementById('exp-search'),
+        clearAllExpBtn: document.getElementById('clear-all-exp-btn'),
+        confirmBanner: document.getElementById('clear-confirm-banner'),
+        confirmYes: document.getElementById('confirm-clear-yes'),
+        confirmNo: document.getElementById('confirm-clear-no'),
+        expenseList: document.getElementById('expense-list')
+      };
+
+      /* ======================================================================
+         Helpers
+         ====================================================================== */
+      function formatINR(amount) {
+        const num = Number(amount) || 0;
+        const absFormatted = Math.abs(num).toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+        return (num < 0 ? '-₹' : '₹') + absFormatted;
+      }
+
+      function getTodayISO() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+
+      function safeReadJSON(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (!raw) return fallback;
+          return JSON.parse(raw);
+        } catch {
+          return fallback;
+        }
+      }
+
+      function safeWriteJSON(key, value) {
+        try {
+          localStorage.setItem(key, JSON.stringify(value));
+        } catch (err) {
+          console.warn('LocalStorage write failed:', err);
+        }
+      }
+
+      /* ======================================================================
+         1. Theme Management
+         ====================================================================== */
+      function applyTheme(theme) {
+        const isDark = theme === 'dark';
+        document.documentElement.classList.toggle('dark', isDark);
+        dom.themeIcon.textContent = isDark ? '☀️' : '🌙';
+        dom.themeLabel.textContent = isDark ? 'Light' : 'Dark';
+      }
+
+      function initTheme() {
+        const saved = localStorage.getItem(STORAGE.THEME);
+        if (saved === 'dark' || saved === 'light') {
+          applyTheme(saved);
+        } else {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          applyTheme(prefersDark ? 'dark' : 'light');
+        }
+      }
+
+      dom.themeToggle.addEventListener('click', () => {
+        const nextTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+        localStorage.setItem(STORAGE.THEME, nextTheme);
+        applyTheme(nextTheme);
+      });
+
+      /* ======================================================================
+         2. Safe Math Expression Evaluator (No eval)
+         Supports +, -, ×, ÷, %, parentheses, decimals, and unary minus
+         ====================================================================== */
+      function evaluateMathExpression(rawExpr) {
+        // Normalize visual symbols to standard operators
+        let sanitized = rawExpr
+          .replace(/×/g, '*')
+          .replace(/÷/g, '/')
+          .replace(/−/g, '-')
+          .replace(/\s+/g, '');
+
+        if (!sanitized) return 0;
+
+        // Convert percentage literals (e.g., 50% -> (50/100))
+        sanitized = sanitized.replace(/(\d+(?:\.\d+)?)%/g, '($1/100)');
+
+        // Allow only valid math characters
+        if (!/^[0-9+\-*/().]+$/.test(sanitized)) {
+          throw new Error('Invalid syntax');
+        }
+
+        // Tokenize into numbers, operators, and parentheses
+        const tokens = [];
+        let i = 0;
+        while (i < sanitized.length) {
+          const ch = sanitized[i];
+          const prev = tokens[tokens.length - 1];
+          const isUnaryMinus =
+            ch === '-' && (tokens.length === 0 || prev === '(' || ['+', '-', '*', '/'].includes(prev));
+
+          if (/[0-9.]/.test(ch) || isUnaryMinus) {
+            let numStr = ch;
+            i++;
+            while (i < sanitized.length && /[0-9.]/.test(sanitized[i])) {
+              numStr += sanitized[i++];
+            }
+            if ((numStr.match(/\./g) || []).length > 1 || numStr === '-' || numStr === '.') {
+              throw new Error('Invalid number');
+            }
+            tokens.push(parseFloat(numStr));
+          } else if (['+', '-', '*', '/', '(', ')'].includes(ch)) {
+            // Implicit multiplication like 2(3+4) or (2+3)(4+5)
+            if (ch === '(' && (typeof prev === 'number' || prev === ')')) {
+              tokens.push('*');
+            }
+            tokens.push(ch);
+            i++;
+          } else {
+            throw new Error('Invalid character');
+          }
+        }
+
+        // Shunting-yard algorithm to Reverse Polish Notation (RPN)
+        const outputQueue = [];
+        const opStack = [];
+        const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
+
+        for (const token of tokens) {
+          if (typeof token === 'number') {
+            outputQueue.push(token);
+          } else if (token in precedence) {
+            while (
+              opStack.length > 0 &&
+              opStack[opStack.length - 1] in precedence &&
+              precedence[opStack[opStack.length - 1]] >= precedence[token]
+            ) {
+              outputQueue.push(opStack.pop());
+            }
+            opStack.push(token);
+          } else if (token === '(') {
+            opStack.push(token);
+          } else if (token === ')') {
+            let foundOpen = false;
+            while (opStack.length > 0) {
+              const top = opStack.pop();
+              if (top === '(') {
+                foundOpen = true;
+                break;
+              }
+              outputQueue.push(top);
+            }
+            if (!foundOpen) throw new Error('Mismatched parentheses');
+          }
+        }
+
+        while (opStack.length > 0) {
+          const top = opStack.pop();
+          if (top === '(' || top === ')') throw new Error('Mismatched parentheses');
+          outputQueue.push(top);
+        }
+
+        // Evaluate RPN stack
+        const evalStack = [];
+        for (const item of outputQueue) {
+          if (typeof item === 'number') {
+            evalStack.push(item);
+          } else {
+            if (evalStack.length < 2) throw new Error('Incomplete expression');
+            const b = evalStack.pop();
+            const a = evalStack.pop();
+            if (item === '+') evalStack.push(a + b);
+            else if (item === '-') evalStack.push(a - b);
+            else if (item === '*') evalStack.push(a * b);
+            else if (item === '/') {
+              if (b === 0) throw new Error('Cannot divide by zero');
+              evalStack.push(a / b);
+            }
+          }
+        }
+
+        if (evalStack.length !== 1 || !Number.isFinite(evalStack[0])) {
+          throw new Error('Invalid expression');
+        }
+
+        // Round floating point artifacts cleanly
+        return Math.round(evalStack[0] * 1e8) / 1e8;
+      }
+
+      /* ======================================================================
+         3. Calculator UI & Actions
+         ====================================================================== */
+      function updateCalcScreen() {
+        dom.calcExpr.textContent = expression || '0';
+        dom.calcOutput.textContent = currentDisplay;
+        dom.calcOutput.classList.toggle('is-error', hasError);
+      }
+
+      function renderCalcHistory() {
+        dom.clearHistoryBtn.disabled = calcHistory.length === 0;
+        dom.historyList.innerHTML = '';
+
+        if (calcHistory.length === 0) {
+          const empty = document.createElement('li');
+          empty.className = 'empty-mini';
+          empty.textContent = 'No calculations yet. Try an expression above!';
+          dom.historyList.appendChild(empty);
+          return;
+        }
+
+        calcHistory.forEach((entry) => {
+          const li = document.createElement('li');
+          li.className = 'history-item';
+          li.title = 'Click to reuse this result';
+
+          const exprSpan = document.createElement('span');
+          exprSpan.className = 'history-expr';
+          exprSpan.textContent = entry.expr;
+
+          const resSpan = document.createElement('span');
+          resSpan.className = 'history-res';
+          resSpan.textContent = '= ' + entry.result;
+
+          li.append(exprSpan, resSpan);
+          li.addEventListener('click', () => {
+            hasError = false;
+            expression = String(entry.result);
+            currentDisplay = String(entry.result);
+            lastResultNumeric = Number(entry.result) || 0;
+            updateCalcScreen();
+          });
+
+          dom.historyList.appendChild(li);
+        });
+      }
+
+      function handleCalcInput(val) {
+        if (hasError) {
+          expression = '';
+          currentDisplay = '0';
+          hasError = false;
+        }
+
+        const operators = ['+', '-', '×', '÷'];
+        const lastChar = expression.slice(-1);
+
+        // Replace consecutive binary operators cleanly
+        if (operators.includes(val) && operators.includes(lastChar)) {
+          expression = expression.slice(0, -1) + val;
+          updateCalcScreen();
+          return;
+        }
+
+        // Prevent starting with *, /, %
+        if (expression === '' && ['×', '÷', '%'].includes(val)) {
+          return;
+        }
+
+        expression += val;
+        currentDisplay = expression;
+        updateCalcScreen();
+      }
+
+      function handleCalcClear() {
+        expression = '';
+        currentDisplay = '0';
+        lastResultNumeric = 0;
+        hasError = false;
+        updateCalcScreen();
+      }
+
+      function handleCalcBackspace() {
+        if (hasError) {
+          handleCalcClear();
+          return;
+        }
+        expression = expression.slice(0, -1);
+        currentDisplay = expression || '0';
+        updateCalcScreen();
+      }
+
+      function handleCalcEquals() {
+        if (!expression.trim()) return;
+        try {
+          const result = evaluateMathExpression(expression);
+          const finishedExpr = expression;
+          currentDisplay = String(result);
+          lastResultNumeric = result;
+          hasError = false;
+
+          calcHistory.unshift({ expr: finishedExpr, result });
+          if (calcHistory.length > 20) calcHistory.pop();
+          safeWriteJSON(STORAGE.HISTORY, calcHistory);
+          renderCalcHistory();
+
+          expression = String(result);
+          updateCalcScreen();
+          dom.calcExpr.textContent = finishedExpr + ' =';
+        } catch (err) {
+          hasError = true;
+          currentDisplay = err.message || 'Error';
+          updateCalcScreen();
+        }
+      }
+
+      dom.keypad.addEventListener('click', (event) => {
+        const btn = event.target.closest('button');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        const value = btn.dataset.value;
+
+        if (action === 'clear') handleCalcClear();
+        else if (action === 'backspace') handleCalcBackspace();
+        else if (action === 'equals') handleCalcEquals();
+        else if (value) handleCalcInput(value);
+      });
+
+      // Keyboard Support (when not typing inside an input/select)
+      document.addEventListener('keydown', (event) => {
+        const tag = document.activeElement && document.activeElement.tagName;
+        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+
+        const key = event.key;
+        if (/^[0-9.()%]$/.test(key)) {
+          event.preventDefault();
+          handleCalcInput(key);
+        } else if (key === '+') {
+          event.preventDefault();
+          handleCalcInput('+');
+        } else if (key === '-') {
+          event.preventDefault();
+          handleCalcInput('-');
+        } else if (key === '*') {
+          event.preventDefault();
+          handleCalcInput('×');
+        } else if (key === '/') {
+          event.preventDefault();
+          handleCalcInput('÷');
+        } else if (key === 'Enter' || key === '=') {
+          event.preventDefault();
+          handleCalcEquals();
+        } else if (key === 'Backspace') {
+          event.preventDefault();
+          handleCalcBackspace();
+        } else if (key === 'Escape') {
+          event.preventDefault();
+          handleCalcClear();
+        }
+      });
+
+      // Send calculator result directly into the Expense Tracker amount field
+      dom.sendToExpenseBtn.addEventListener('click', () => {
+        let amountToSend = lastResultNumeric;
+        if (!hasError && expression) {
+          try {
+            amountToSend = evaluateMathExpression(expression);
+          } catch {
+            amountToSend = parseFloat(currentDisplay) || 0;
+          }
+        }
+
+        if (amountToSend > 0) {
+          dom.expAmount.value = (Math.round(amountToSend * 100) / 100).toFixed(2);
+          dom.expTitle.focus();
+          showExpenseFeedback(`Filled ₹${dom.expAmount.value} from calculator.`, true);
+        } else {
+          showExpenseFeedback('Calculate a positive number first to send to expenses.', false);
+        }
+      });
+
+      dom.clearHistoryBtn.addEventListener('click', () => {
+        calcHistory = [];
+        safeWriteJSON(STORAGE.HISTORY, calcHistory);
+        renderCalcHistory();
+      });
+
+      /* ======================================================================
+         4. Daily Expense Tracker Logic & Rendering
+         ====================================================================== */
+      function showExpenseFeedback(message, isSuccess) {
+        dom.expFeedback.textContent = message;
+        dom.expFeedback.classList.toggle('is-ok', Boolean(isSuccess));
+      }
+
+      function renderBudgetAndStats() {
+        const totalSpent = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        const remaining = budgetTarget - totalSpent;
+        const pctRaw = budgetTarget > 0 ? (totalSpent / budgetTarget) * 100 : 0;
+        const pctClamped = Math.min(100, Math.max(0, pctRaw));
+
+        dom.statSpent.textContent = formatINR(totalSpent);
+        dom.statRemaining.textContent = formatINR(remaining);
+        dom.statRemaining.classList.toggle('is-positive', remaining >= 0);
+        dom.statRemaining.classList.toggle('is-negative', remaining < 0);
+        dom.statCount.textContent = String(expenses.length);
+
+        dom.budgetTargetDisplay.textContent = `Target: ${formatINR(budgetTarget)}`;
+        dom.budgetPercentLabel.textContent = `${pctRaw.toFixed(0)}% of budget used`;
+        dom.budgetProgressbar.setAttribute('aria-valuenow', String(Math.round(pctClamped)));
+        dom.budgetProgressFill.style.width = `${pctClamped}%`;
+
+        dom.budgetProgressFill.classList.remove('is-warning', 'is-over');
+        if (pctRaw > 100) {
+          dom.budgetProgressFill.classList.add('is-over');
+        } else if (pctRaw >= 75) {
+          dom.budgetProgressFill.classList.add('is-warning');
+        }
+      }
+
+      function renderCategoryBreakdown() {
+        const totalSpent = expenses.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+        dom.breakdownList.innerHTML = '';
+
+        if (totalSpent <= 0) {
+          const empty = document.createElement('div');
+          empty.className = 'empty-mini';
+          empty.textContent = 'Add an expense to see category spending distribution.';
+          dom.breakdownList.appendChild(empty);
+          return;
+        }
+
+        const totalsByCat = {};
+        CATEGORIES.forEach((c) => { totalsByCat[c] = 0; });
+        expenses.forEach((exp) => {
+          const cat = CATEGORIES.includes(exp.category) ? exp.category : 'Other';
+          totalsByCat[cat] += Number(exp.amount) || 0;
+        });
+
+        CATEGORIES.forEach((cat) => {
+          const catAmount = totalsByCat[cat];
+          if (catAmount <= 0) return;
+
+          const pct = (catAmount / totalSpent) * 100;
+
+          const row = document.createElement('div');
+          row.className = 'breakdown-row';
+
+          const meta = document.createElement('div');
+          meta.className = 'breakdown-meta';
+
+          const leftSpan = document.createElement('span');
+          leftSpan.textContent = `${cat} (${pct.toFixed(1)}%)`;
+
+          const rightSpan = document.createElement('span');
+          rightSpan.style.fontFamily = "'Fira Code', monospace";
+          rightSpan.textContent = formatINR(catAmount);
+
+          meta.append(leftSpan, rightSpan);
+
+          const barBg = document.createElement('div');
+          barBg.className = 'breakdown-bar-bg';
+
+          const barFill = document.createElement('div');
+          barFill.className = 'breakdown-bar-fill';
+          barFill.style.width = `${pct}%`;
+
+          barBg.appendChild(barFill);
+          row.append(meta, barBg);
+          dom.breakdownList.appendChild(row);
+        });
+      }
+
+      function renderExpenseList() {
+        dom.clearAllExpBtn.disabled = expenses.length === 0;
+        const query = searchQuery.trim().toLowerCase();
+
+        const visible = expenses.filter((item) => {
+          if (selectedCategory !== 'All' && item.category !== selectedCategory) return false;
+          if (query) {
+            const titleMatch = item.title.toLowerCase().includes(query);
+            const catMatch = item.category.toLowerCase().includes(query);
+            return titleMatch || catMatch;
+          }
+          return true;
+        });
+
+        dom.expenseList.innerHTML = '';
+
+        if (visible.length === 0) {
+          const empty = document.createElement('li');
+          empty.className = 'empty-mini';
+          empty.textContent =
+            expenses.length === 0
+              ? 'No expenses logged yet. Add your first expense above!'
+              : 'No expenses match the selected category or search query.';
+          dom.expenseList.appendChild(empty);
+          return;
+        }
+
+        visible.forEach((exp) => {
+          const li = document.createElement('li');
+          li.className = 'tx-item';
+
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'tx-info';
+
+          const titleDiv = document.createElement('div');
+          titleDiv.className = 'tx-title';
+          titleDiv.textContent = exp.title;
+
+          const metaDiv = document.createElement('div');
+          metaDiv.className = 'tx-meta';
+
+          const catSpan = document.createElement('span');
+          catSpan.className = 'tx-cat-badge';
+          catSpan.textContent = exp.category;
+
+          const dateSpan = document.createElement('span');
+          dateSpan.textContent = exp.date;
+
+          metaDiv.append(catSpan, dateSpan);
+          infoDiv.append(titleDiv, metaDiv);
+
+          const rightDiv = document.createElement('div');
+          rightDiv.className = 'tx-right';
+
+          const amtSpan = document.createElement('span');
+          amtSpan.className = 'tx-amount';
+          amtSpan.textContent = formatINR(exp.amount);
+
+          const delBtn = document.createElement('button');
+          delBtn.type = 'button';
+          delBtn.className = 'tx-del-btn';
+          delBtn.textContent = '✕';
+          delBtn.setAttribute('aria-label', `Delete ${exp.title}`);
+          delBtn.addEventListener('click', () => {
+            expenses = expenses.filter((item) => item.id !== exp.id);
+            safeWriteJSON(STORAGE.EXPENSES, expenses);
+            renderAllExpenseViews();
+          });
+
+          rightDiv.append(amtSpan, delBtn);
+          li.append(infoDiv, rightDiv);
+          dom.expenseList.appendChild(li);
+        });
+      }
+
+      function renderAllExpenseViews() {
+        renderBudgetAndStats();
+        renderCategoryBreakdown();
+        renderExpenseList();
+      }
+
+      // Budget Target Form
+      dom.budgetForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const parsed = parseFloat(dom.budgetInput.value);
+        if (!Number.isFinite(parsed) || parsed <= 0) {
+          showExpenseFeedback('Please enter a valid positive budget amount.', false);
+          return;
+        }
+        budgetTarget = Math.round(parsed * 100) / 100;
+        safeWriteJSON(STORAGE.BUDGET, budgetTarget);
+        renderBudgetAndStats();
+        showExpenseFeedback(`Budget target updated to ${formatINR(budgetTarget)}.`, true);
+      });
+
+      // Add Expense Form
+      dom.expenseForm.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const title = dom.expTitle.value.trim();
+        const amount = parseFloat(dom.expAmount.value);
+        const category = CATEGORIES.includes(dom.expCategory.value) ? dom.expCategory.value : 'Other';
+        const date = dom.expDate.value || getTodayISO();
+
+        if (!title) {
+          showExpenseFeedback('Please enter an expense description.', false);
+          dom.expTitle.focus();
+          return;
+        }
+        if (!Number.isFinite(amount) || amount <= 0) {
+          showExpenseFeedback('Please enter a valid amount greater than ₹0.', false);
+          dom.expAmount.focus();
+          return;
+        }
+
+        const newExpense = {
+          id: 'exp-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+          title,
+          amount: Math.round(amount * 100) / 100,
+          category,
+          date
+        };
+
+        expenses.unshift(newExpense);
+        safeWriteJSON(STORAGE.EXPENSES, expenses);
+
+        dom.expTitle.value = '';
+        dom.expAmount.value = '';
+        dom.expDate.value = getTodayISO();
+        showExpenseFeedback(`Added "${title}" (${formatINR(newExpense.amount)}).`, true);
+
+        renderAllExpenseViews();
+      });
+
+      // Category Filter Pills
+      dom.categoryPills.forEach((pill) => {
+        pill.addEventListener('click', () => {
+          selectedCategory = pill.dataset.cat || 'All';
+          dom.categoryPills.forEach((btn) => {
+            btn.setAttribute('aria-pressed', String(btn === pill));
+          });
+          renderExpenseList();
+        });
+      });
+
+      // Search Input
+      dom.expSearch.addEventListener('input', (event) => {
+        searchQuery = event.target.value || '';
+        renderExpenseList();
+      });
+
+      // Clear All Expenses with inline confirmation
+      dom.clearAllExpBtn.addEventListener('click', () => {
+        if (expenses.length === 0) return;
+        dom.confirmBanner.hidden = false;
+      });
+
+      dom.confirmNo.addEventListener('click', () => {
+        dom.confirmBanner.hidden = true;
+      });
+
+      dom.confirmYes.addEventListener('click', () => {
+        expenses = [];
+        safeWriteJSON(STORAGE.EXPENSES, expenses);
+        dom.confirmBanner.hidden = true;
+        showExpenseFeedback('All logged expenses cleared.', true);
+        renderAllExpenseViews();
+      });
+
+      /* ======================================================================
+         Initialization
+         ====================================================================== */
+      function init() {
+        initTheme();
+
+        const savedHistory = safeReadJSON(STORAGE.HISTORY, []);
+        calcHistory = Array.isArray(savedHistory) ? savedHistory : [];
+
+        const savedBudget = Number(safeReadJSON(STORAGE.BUDGET, 5000));
+        budgetTarget = Number.isFinite(savedBudget) && savedBudget > 0 ? savedBudget : 5000;
+        dom.budgetInput.value = budgetTarget;
+
+        const savedExpenses = safeReadJSON(STORAGE.EXPENSES, []);
+        expenses = Array.isArray(savedExpenses) ? savedExpenses : [];
+
+        dom.expDate.value = getTodayISO();
+
+        updateCalcScreen();
+        renderCalcHistory();
+        renderAllExpenseViews();
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
